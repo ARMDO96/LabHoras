@@ -1,0 +1,1137 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Horas Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#EEF6F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#091315" media="(prefers-color-scheme: dark)">
+<style>
+@font-face {
+  font-family: 'Figtree';
+  src: url(fonts/figtree-latin.woff2) format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Layout: título grande estilo One UI que se colapsa en una barra fija; una tarjeta de resumen;
+   días agrupados por semana en listas redondeadas; barra flotante inferior con el total. */
+:root {
+  --bg: #EEF6F7;
+  --surface: #FFFFFF;
+  --surface-2: #E3F1F3;
+  --fg: #0D2A30;
+  --muted: #5E7C82;
+  --line: rgba(13, 42, 48, .08);
+  --accent: #00A6BF;
+  --accent-strong: #00788A;
+  --accent-soft: #CDEFF4;
+  --on-accent: #FFFFFF;
+  --hero-a: #19C4DA;
+  --hero-b: #0090A8;
+  --on-hero: #FFFFFF;
+  --on-hero-soft: rgba(255, 255, 255, .78);
+  --hero-chip: rgba(255, 255, 255, .18);
+  --holiday: #C24E73;
+  --holiday-soft: #FBE3EB;
+  --danger: #D64545;
+  --scrim: rgba(6, 26, 30, .38);
+  --bar: rgba(255, 255, 255, .86);
+  --shadow: 0 1px 2px rgba(13, 42, 48, .05), 0 10px 28px rgba(13, 42, 48, .07);
+
+  --font: 'Figtree', 'SamsungOne', 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --r-xl: 28px;
+  --r-lg: 22px;
+  --r-md: 16px;
+  --inset-top: 0px;
+  --inset-bottom: 0px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #091315;
+    --surface: #10201F;
+    --surface-2: #172E33;
+    --fg: #E2F3F5;
+    --muted: #88A8AE;
+    --line: rgba(226, 243, 245, .08);
+    --accent: #38D0E3;
+    --accent-strong: #84E4EF;
+    --accent-soft: #123A41;
+    --on-accent: #04252A;
+    --hero-a: #0C8A9C;
+    --hero-b: #075663;
+    --on-hero: #F0FCFD;
+    --on-hero-soft: rgba(240, 252, 253, .72);
+    --hero-chip: rgba(240, 252, 253, .14);
+    --holiday: #F294B3;
+    --holiday-soft: #3A1F2A;
+    --danger: #FF8080;
+    --scrim: rgba(0, 0, 0, .55);
+    --bar: rgba(16, 32, 31, .88);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #091315;
+  --surface: #10201F;
+  --surface-2: #172E33;
+  --fg: #E2F3F5;
+  --muted: #88A8AE;
+  --line: rgba(226, 243, 245, .08);
+  --accent: #38D0E3;
+  --accent-strong: #84E4EF;
+  --accent-soft: #123A41;
+  --on-accent: #04252A;
+  --hero-a: #0C8A9C;
+  --hero-b: #075663;
+  --on-hero: #F0FCFD;
+  --on-hero-soft: rgba(240, 252, 253, .72);
+  --hero-chip: rgba(240, 252, 253, .14);
+  --holiday: #F294B3;
+  --holiday-soft: #3A1F2A;
+  --danger: #FF8080;
+  --scrim: rgba(0, 0, 0, .55);
+  --bar: rgba(16, 32, 31, .88);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: max(env(safe-area-inset-top, 0px), var(--inset-top));
+  background: var(--bg);
+  z-index: 10;
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(132px + max(env(safe-area-inset-bottom, 0px), var(--inset-bottom)));
+}
+
+/* Barra superior */
+.appbar {
+  position: sticky;
+  top: max(env(safe-area-inset-top, 0px), var(--inset-top));
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 56px;
+  margin: 0 -8px;
+  padding: 0 4px;
+  background: var(--bg);
+  transition: box-shadow .2s;
+}
+.appbar.compact { box-shadow: 0 1px 0 var(--line); }
+.appbar .mini {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .2s, transform .2s;
+}
+.appbar.compact .mini { opacity: 1; transform: none; }
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--fg);
+}
+.icon-btn:active { background: var(--surface-2); }
+.icon-btn svg { width: 24px; height: 24px; }
+.pill-btn {
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: .9rem;
+  font-weight: 600;
+}
+.pill-btn[hidden] { display: none; }
+
+/* Título grande */
+.hero {
+  padding-block: 28px 22px;
+  padding-inline: 4px;
+}
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+.big {
+  margin: 0;
+  font-size: clamp(2.5rem, 11vw, 3.1rem);
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.big .yr { color: var(--muted); font-weight: 300; }
+
+/* Tarjeta de resumen */
+.summary {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 22px 18px;
+  border-radius: var(--r-xl);
+  background: linear-gradient(150deg, var(--hero-a), var(--hero-b));
+  color: var(--on-hero);
+  box-shadow: var(--shadow);
+}
+.summary::after {
+  content: "";
+  position: absolute;
+  right: -60px;
+  top: -70px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: var(--hero-chip);
+  pointer-events: none;
+}
+.s-label { margin: 0; font-size: .82rem; color: var(--on-hero-soft); }
+.s-total {
+  margin: 2px 0 18px;
+  font-size: clamp(2rem, 9vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+.s-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.s-grid > div { min-width: 0; }
+.s-grid dt { font-size: .74rem; color: var(--on-hero-soft); }
+.s-grid dd { margin: 0; font-size: 1rem; font-weight: 600; overflow-wrap: anywhere; }
+.s-rate {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 10px 10px 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--hero-chip);
+}
+.s-rate .txt { flex: 1; min-width: 0; font-size: .88rem; }
+.s-rate .txt b { font-weight: 600; }
+.s-rate button {
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--on-hero);
+  color: var(--hero-b);
+  font-size: .85rem;
+  font-weight: 600;
+}
+.s-break { position: relative; margin: 10px 0 0; padding: 0; list-style: none; font-size: .8rem; color: var(--on-hero-soft); }
+.s-break li { display: flex; justify-content: space-between; gap: 8px; }
+.hint { margin: 14px 4px 0; font-size: .86rem; color: var(--muted); }
+
+/* Lista de días */
+.weeks { display: grid; gap: 18px; margin-top: 22px; }
+.week-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 10px 8px;
+  font-size: .8rem;
+  color: var(--muted);
+}
+.week-h b { font-weight: 600; color: var(--fg); }
+.list {
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.day {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 12px 10px 14px;
+}
+.day + .day { border-top: 1px solid var(--line); }
+.dnum {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.dmeta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dname { font-size: .98rem; text-transform: capitalize; }
+.dsub { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: .78rem; color: var(--muted); }
+.dsub:empty { display: none; }
+.chip {
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--holiday-soft);
+  color: var(--holiday);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.amt { font-variant-numeric: tabular-nums; }
+.day.weekend .dname { color: var(--muted); }
+.day.weekend .dnum { color: var(--muted); }
+.day.holiday .dnum { background: var(--holiday-soft); color: var(--holiday); }
+.day.today .dnum { background: var(--accent); color: var(--on-accent); }
+.day.today .dname { font-weight: 600; color: var(--fg); }
+
+.hbox {
+  position: relative;
+  display: block;
+  width: 92px;
+}
+.hin {
+  width: 100%;
+  height: 44px;
+  padding: 0 28px 0 10px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: var(--surface-2);
+  text-align: right;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  transition: border-color .15s, background-color .15s;
+}
+.hin::placeholder { color: var(--muted); opacity: .55; }
+.hin:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.hin.has { color: var(--accent-strong); font-weight: 600; background: var(--accent-soft); }
+.hin.has:focus { background: var(--surface); }
+.hin.bad { border-color: var(--danger); color: var(--danger); }
+.hu {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .85rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* Barra inferior */
+.bottombar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-block: 0 calc(12px + max(env(safe-area-inset-bottom, 0px), var(--inset-bottom)));
+  pointer-events: none;
+}
+.bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 536px;
+  margin: 0 auto;
+  padding: 10px 10px 10px 20px;
+  border-radius: 999px;
+  background: var(--bar);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: var(--shadow), 0 0 0 1px var(--line);
+}
+.bar .t { flex: 1; min-width: 0; line-height: 1.2; }
+.bar .t small { display: block; font-size: .74rem; color: var(--muted); }
+.bar .t strong { display: block; font-size: 1.12rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.cta svg { width: 20px; height: 20px; }
+
+/* Hojas (diálogos) */
+dialog.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90%;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: var(--shadow);
+}
+dialog.sheet::backdrop { background: var(--scrim); }
+dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
+@keyframes up { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+.sheet-in {
+  display: grid;
+  gap: 22px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  padding-block: 10px calc(24px + max(env(safe-area-inset-bottom, 0px), var(--inset-bottom)));
+}
+.grab { justify-self: center; width: 36px; height: 4px; border-radius: 2px; background: var(--line); background: color-mix(in srgb, var(--muted) 35%, transparent); }
+.sheet-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sheet-h h2 { margin: 0; font-size: 1.5rem; font-weight: 400; }
+.sec { display: grid; gap: 10px; }
+.sec h3 { margin: 0; font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-strong); }
+.sec p { margin: 0; font-size: .86rem; color: var(--muted); }
+.card { display: grid; gap: 12px; padding: 16px; border-radius: var(--r-lg); background: var(--surface-2); }
+.row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field span { font-size: .78rem; color: var(--muted); }
+.field input, .field textarea {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  padding: 0 14px;
+  border: 1.5px solid transparent;
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 1rem;
+}
+.field textarea { height: 110px; padding: 10px 14px; resize: vertical; font-size: .78rem; font-family: ui-monospace, 'Roboto Mono', monospace; }
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+.field input.bad { border-color: var(--danger); }
+.btn {
+  height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.btn.soft { background: var(--surface); color: var(--accent-strong); }
+.btn.warn { background: var(--surface); color: var(--danger); }
+.btn.warn.armed { background: var(--danger); color: var(--surface); }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.hist { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.hist li { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: .9rem; }
+.hist li .d { flex: 1; min-width: 0; color: var(--muted); }
+.hist li .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.hist li button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); }
+.hist li button:active { background: var(--surface); }
+.hist li .sp { width: 32px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .8rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; vertical-align: -1px; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + max(env(safe-area-inset-bottom, 0px), var(--inset-bottom)));
+  z-index: 20;
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: .9rem;
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <div class="appbar" id="appbar">
+    <button class="icon-btn" id="prev" type="button" aria-label="Mes anterior">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="mini" id="mini" aria-hidden="true"></div>
+    <button class="pill-btn" id="today" type="button">Hoy</button>
+    <button class="icon-btn" id="next" type="button" aria-label="Mes siguiente">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <button class="icon-btn" id="openSettings" type="button" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>
+    </button>
+  </div>
+
+  <header class="hero" id="hero">
+    <p class="eyebrow">Horas a facturar · Laboratorio</p>
+    <h1 class="big" id="title">Mes</h1>
+  </header>
+
+  <section class="summary" aria-label="Resumen del mes">
+    <p class="s-label">Total a facturar con IVA</p>
+    <p class="s-total num" id="sTotal">$ 0,00</p>
+    <dl class="s-grid">
+      <div><dt>Horas</dt><dd class="num" id="sHours">0 h</dd></div>
+      <div><dt>Subtotal</dt><dd class="num" id="sSub">$ 0,00</dd></div>
+      <div><dt id="sIvaLbl">IVA 22 %</dt><dd class="num" id="sIva">$ 0,00</dd></div>
+    </dl>
+    <div class="s-rate">
+      <div class="txt" id="sRate">Valor hora <b>$ 462,00</b></div>
+      <button type="button" id="editRate">Cambiar</button>
+    </div>
+    <ul class="s-break" id="sBreak" hidden></ul>
+  </section>
+  <p class="hint" id="hint">Escribí las horas al lado de cada día. Acepta 8, 7,5 o 7:30.</p>
+
+  <div class="weeks" id="weeks"></div>
+</div>
+
+<div class="bottombar">
+  <div class="bar">
+    <div class="t"><small id="barLbl">Total del mes</small><strong class="num" id="barTotal">$ 0,00</strong></div>
+    <button class="cta" id="share" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>
+      Compartir
+    </button>
+  </div>
+</div>
+
+<dialog class="sheet" id="settings" aria-labelledby="setTitle">
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="setTitle">Ajustes</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <section class="sec" id="rateSec">
+      <h3>Valor hora</h3>
+      <p id="rateNow">Vigente este mes: $ 462,00</p>
+      <form class="card" id="rateForm" novalidate>
+        <div class="row2">
+          <label class="field"><span>Nuevo valor ($)</span><input id="rateNew" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="field"><span>Vigente desde</span><input id="rateFrom" type="date"></label>
+        </div>
+        <p>Las horas anteriores a esa fecha conservan el valor que tenían.</p>
+        <div class="btns"><button class="btn" type="submit">Guardar valor hora</button></div>
+      </form>
+      <ul class="hist" id="rateHist"></ul>
+    </section>
+
+    <section class="sec">
+      <h3>IVA</h3>
+      <div class="card">
+        <label class="field"><span>Porcentaje de IVA (%)</span><input id="ivaIn" type="text" inputmode="decimal" autocomplete="off"></label>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h3>Calendario</h3>
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i>Hoy</span>
+        <span><i style="background:var(--holiday)"></i>Feriado (Uruguay)</span>
+        <span><i style="background:var(--muted)"></i>Fin de semana</span>
+      </div>
+      <p>Todos los días se pueden cargar, incluidos fines de semana y feriados. Los feriados se marcan solo como referencia.</p>
+    </section>
+
+    <section class="sec">
+      <h3>Respaldo</h3>
+      <p>Copiá este texto y guardalo en un lugar seguro. Para recuperar los datos, pegalo acá y tocá Restaurar.</p>
+      <div class="card">
+        <label class="field"><span class="sr">Datos de respaldo</span><textarea id="backupTxt" spellcheck="false"></textarea></label>
+        <div class="btns">
+          <button class="btn soft" type="button" id="copyBackup">Copiar respaldo</button>
+          <button class="btn soft" type="button" id="restoreBackup">Restaurar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h3>Este mes</h3>
+      <div class="btns"><button class="btn warn" type="button" id="clearMonth">Borrar horas del mes</button></div>
+    </section>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="shareSheet" aria-labelledby="shareTitle">
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="shareTitle">Resumen</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p style="margin:0;color:var(--muted);font-size:.88rem">No se pudo copiar automáticamente. Mantené presionado el texto para copiarlo.</p>
+    <label class="field"><span class="sr">Resumen del mes</span><textarea id="shareTxt" readonly style="height:260px"></textarea></label>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- Datos ---------- */
+  const KEY = 'labhoras.v1';
+  const DEFAULT_RATE = 462;
+  const DEFAULT_IVA = 22;
+  const BASE_DATE = '2000-01-01';
+  const memory = {};
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return memory[k] ?? null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { memory[k] = v; } }
+  };
+  const isoRe = /^\d{4}-\d{2}-\d{2}$/;
+
+  function fresh() {
+    return { v: 1, hours: {}, rates: [{ from: BASE_DATE, value: DEFAULT_RATE }], iva: DEFAULT_IVA, seeds: [] };
+  }
+  function clean(s) {
+    if (!s || typeof s !== 'object') return null;
+    if (!Array.isArray(s.rates) || !s.rates.length) return null;
+    const rates = s.rates.filter(r => r && isoRe.test(r.from) && Number.isFinite(r.value) && r.value >= 0);
+    if (!rates.length) return null;
+    const hours = {};
+    if (s.hours && typeof s.hours === 'object') {
+      for (const [k, v] of Object.entries(s.hours)) {
+        if (isoRe.test(k) && Number.isFinite(v) && v > 0 && v <= 24) hours[k] = v;
+      }
+    }
+    const iva = Number.isFinite(s.iva) && s.iva >= 0 && s.iva <= 100 ? s.iva : DEFAULT_IVA;
+    const seeds = Array.isArray(s.seeds) ? s.seeds.filter(x => typeof x === 'string') : [];
+    return { v: 1, hours, rates, iva, seeds };
+  }
+
+  /* Carga inicial desde la planilla "Horas trabajadas" (abril a octubre de 2026).
+     Valor hora: $456 hasta el 31/07/2026 y $462 desde el 01/08/2026.
+     Se aplica una sola vez por dispositivo; después manda lo que se edite en la app. */
+  const SEED = {
+    id: 'planilla-2026-04-10',
+    rates: [{ from: BASE_DATE, value: 456 }, { from: '2026-08-01', value: 462 }],
+    hours: {"2026-04-01":6,"2026-04-02":6,"2026-04-06":3,"2026-04-07":3,"2026-04-09":3,"2026-04-10":3.5,"2026-04-13":3,"2026-04-14":3,"2026-04-15":3,"2026-04-16":3,"2026-04-17":3,"2026-04-20":3,"2026-04-21":3,"2026-04-22":3,"2026-04-23":3,"2026-04-24":4,"2026-04-27":3,"2026-04-28":3,"2026-04-29":3,"2026-04-30":3.5,"2026-05-04":3,"2026-05-05":3,"2026-05-06":3,"2026-05-07":3,"2026-05-08":3.5,"2026-05-09":6,"2026-05-11":3,"2026-05-12":2.5,"2026-05-13":3.5,"2026-05-14":3,"2026-05-19":3,"2026-05-20":3,"2026-05-21":3,"2026-05-22":3,"2026-05-25":3,"2026-05-26":3,"2026-05-27":4,"2026-05-29":4,"2026-06-01":3,"2026-06-02":2.5,"2026-06-03":3,"2026-06-04":3,"2026-06-05":3,"2026-06-06":5,"2026-06-08":3,"2026-06-09":3,"2026-06-10":3,"2026-06-11":3,"2026-06-12":3,"2026-06-15":3,"2026-06-16":3,"2026-06-17":3,"2026-06-18":3,"2026-06-22":3,"2026-06-23":3,"2026-06-24":4.5,"2026-06-26":3,"2026-06-29":3,"2026-06-30":3,"2026-07-01":3,"2026-07-02":3,"2026-07-03":3,"2026-07-07":3,"2026-07-08":3,"2026-07-09":3,"2026-07-14":3,"2026-07-15":3,"2026-07-16":3,"2026-07-17":3,"2026-07-20":3,"2026-07-21":3,"2026-07-22":2,"2026-07-23":3,"2026-07-24":3.5,"2026-07-25":5.5,"2026-07-27":3,"2026-07-28":3,"2026-07-30":3,"2026-07-31":4,"2026-08-03":3,"2026-08-05":3,"2026-08-06":3,"2026-08-07":4.5,"2026-08-10":3,"2026-08-11":3,"2026-08-12":3,"2026-08-13":3,"2026-08-17":3,"2026-08-18":3.5,"2026-08-19":3,"2026-08-20":3,"2026-08-24":4,"2026-08-26":4.5,"2026-08-27":4.5,"2026-08-31":3,"2026-09-01":3.5,"2026-09-02":3,"2026-09-03":3,"2026-09-07":3,"2026-09-08":3,"2026-09-09":3,"2026-09-10":3,"2026-09-12":4,"2026-09-14":3,"2026-09-15":3,"2026-09-16":3,"2026-09-17":3,"2026-09-21":3,"2026-09-22":3,"2026-09-23":3,"2026-09-24":3.5,"2026-09-25":3,"2026-09-28":4,"2026-09-29":4,"2026-09-30":4,"2026-10-01":3,"2026-10-05":3.5,"2026-10-06":3.5,"2026-10-07":3,"2026-10-08":3,"2026-10-09":3,"2026-10-13":3,"2026-10-14":3,"2026-10-15":3,"2026-10-16":3.5,"2026-10-19":3,"2026-10-20":4.5,"2026-10-21":3,"2026-10-22":3,"2026-10-23":3,"2026-10-26":3,"2026-10-27":3,"2026-10-28":3,"2026-10-29":3,"2026-10-30":3}
+  };
+  function applySeed(st) {
+    if (st.seeds.includes(SEED.id)) return false;
+    Object.assign(st.hours, SEED.hours);
+    st.rates = SEED.rates.map(r => ({ ...r })).concat(st.rates.filter(r => r.from > '2026-08-01'));
+    st.seeds.push(SEED.id);
+    return true;
+  }
+  let state;
+  try { state = clean(JSON.parse(store.get(KEY) || 'null')); } catch (e) { state = null; }
+  if (!state) state = fresh();
+  sortRates();
+  if (applySeed(state)) { sortRates(); save(); }
+
+  function save() { store.set(KEY, JSON.stringify(state)); }
+  function sortRates() { state.rates.sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0)); }
+  function rateFor(k) {
+    let v = state.rates[0].value;
+    for (const r of state.rates) { if (r.from <= k) v = r.value; else break; }
+    return v;
+  }
+
+  /* ---------- Fechas y formato ---------- */
+  const pad = n => String(n).padStart(2, '0');
+  const iso = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
+  const isoD = dt => iso(dt.getFullYear(), dt.getMonth(), dt.getDate());
+  const addDays = (dt, n) => { const r = new Date(dt); r.setDate(r.getDate() + n); return r; };
+  const round2 = x => Math.round((x + Number.EPSILON) * 100) / 100;
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  let moneyFmt;
+  try { moneyFmt = new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  catch (e) { moneyFmt = { format: x => '$ ' + x.toFixed(2) }; }
+  const money = x => moneyFmt.format(x);
+  const numFmt = new Intl.NumberFormat('es-UY', { maximumFractionDigits: 2 });
+  const fmtH = h => numFmt.format(h);
+  const monthName = (y, m) => cap(new Date(y, m, 1).toLocaleDateString('es-UY', { month: 'long' }));
+  const monthShort = (y, m) => new Date(y, m, 1).toLocaleDateString('es-UY', { month: 'short' }).replace('.', '').toLowerCase();
+  const weekdayLong = dt => dt.toLocaleDateString('es-UY', { weekday: 'long' });
+  const weekdayShort = dt => dt.toLocaleDateString('es-UY', { weekday: 'short' }).replace('.', '');
+  const ddmm = k => `${k.slice(8, 10)}/${k.slice(5, 7)}`;
+  const ddmmyyyy = k => `${k.slice(8, 10)}/${k.slice(5, 7)}/${k.slice(0, 4)}`;
+
+  /* Horas: acepta 8 · 7,5 · 7.5 · 7:30 · 8h. Devuelve NaN si no es válido. */
+  function parseHours(str) {
+    let s = String(str).trim().toLowerCase().replace(/\s*(horas?|hs?)$/, '').trim();
+    if (s === '') return 0;
+    let v;
+    const hm = s.match(/^(\d{1,2}):(\d{1,2})$/);
+    if (hm) {
+      const mins = Number(hm[2]);
+      if (mins >= 60) return NaN;
+      v = Number(hm[1]) + mins / 60;
+    } else {
+      s = s.replace(',', '.');
+      if (!/^(\d+(\.\d*)?|\.\d+)$/.test(s)) return NaN;
+      v = Number(s);
+    }
+    if (!Number.isFinite(v) || v < 0 || v > 24) return NaN;
+    return Math.round(v * 10000) / 10000;
+  }
+  function parseMoney(str) {
+    let s = String(str).trim().replace(/[$\s]/g, '');
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    if (!/^\d+(\.\d+)?$/.test(s)) return NaN;
+    return Number(s);
+  }
+
+  /* ---------- Feriados de Uruguay (referencia) ----------
+     Ley 16.805 y 17.414. No laborables: 1/1, 1/5, 18/7, 25/8, 25/12.
+     19/4, 18/5 y 12/10 se trasladan: martes o miércoles al lunes anterior; jueves o viernes al lunes siguiente. */
+  const holCache = {};
+  function easter(y) {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+    const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(y, month - 1, day);
+  }
+  function holidays(y) {
+    if (holCache[y]) return holCache[y];
+    const map = {};
+    const put = (dt, name, paid) => {
+      const k = isoD(dt);
+      if (map[k]) { map[k].name += ' · ' + name; map[k].paid = map[k].paid || paid; }
+      else map[k] = { name, paid };
+    };
+    put(new Date(y, 0, 1), 'Año Nuevo', true);
+    put(new Date(y, 0, 6), 'Reyes', false);
+    put(new Date(y, 4, 1), 'Día de los Trabajadores', true);
+    put(new Date(y, 5, 19), 'Natalicio de Artigas', false);
+    put(new Date(y, 6, 18), 'Jura de la Constitución', true);
+    put(new Date(y, 7, 25), 'Declaratoria de la Independencia', true);
+    put(new Date(y, 10, 2), 'Día de los Difuntos', false);
+    put(new Date(y, 11, 25), 'Navidad', true);
+    const movable = (m, d, name) => {
+      const dt = new Date(y, m, d), w = dt.getDay();
+      let shift = 0;
+      if (w === 2 || w === 3) shift = 1 - w;
+      else if (w === 4 || w === 5) shift = 8 - w;
+      put(addDays(dt, shift), shift ? name + ' (trasladado)' : name, false);
+    };
+    movable(3, 19, 'Desembarco de los 33 Orientales');
+    movable(4, 18, 'Batalla de Las Piedras');
+    movable(9, 12, 'Día de la Diversidad Cultural');
+    const e = easter(y);
+    put(addDays(e, -48), 'Carnaval', false);
+    put(addDays(e, -47), 'Carnaval', false);
+    for (let i = 6; i >= 2; i--) put(addDays(e, -i), 'Semana de Turismo', false);
+    return (holCache[y] = map);
+  }
+
+  /* ---------- Cálculo ---------- */
+  function daysIn(y, m) { return new Date(y, m + 1, 0).getDate(); }
+  function compute(y, m) {
+    const n = daysIn(y, m);
+    let hours = 0, raw = 0;
+    const groups = new Map();
+    for (let d = 1; d <= n; d++) {
+      const k = iso(y, m, d);
+      const h = state.hours[k] || 0;
+      if (!h) continue;
+      const r = rateFor(k);
+      hours += h;
+      raw += h * r;
+      const g = groups.get(r) || { rate: r, hours: 0, amount: 0 };
+      g.hours += h; g.amount += h * r;
+      groups.set(r, g);
+    }
+    const sub = round2(raw);
+    const iva = round2(sub * state.iva / 100);
+    return { hours: round2(hours), sub, iva, total: round2(sub + iva), groups: [...groups.values()] };
+  }
+  /* Tramos de valor hora dentro del mes (aunque no haya horas cargadas). */
+  function rateSpans(y, m) {
+    const n = daysIn(y, m), spans = [];
+    for (let d = 1; d <= n; d++) {
+      const k = iso(y, m, d), r = rateFor(k);
+      const last = spans[spans.length - 1];
+      if (last && last.rate === r) last.to = k; else spans.push({ rate: r, from: k, to: k });
+    }
+    return spans;
+  }
+
+  /* ---------- Vista ---------- */
+  const $ = id => document.getElementById(id);
+  const now = new Date();
+  const view = { y: now.getFullYear(), m: now.getMonth() };
+
+  function render(scrollToToday) {
+    const { y, m } = view;
+    const name = monthName(y, m);
+    $('title').innerHTML = `${name} <span class="yr">${y}</span>`;
+    $('mini').textContent = `${name} ${y}`;
+    $('barLbl').textContent = `Total ${name.toLowerCase()} con IVA`;
+    $('clearMonth').textContent = `Borrar horas de ${name.toLowerCase()}`;
+    const isCurrent = y === now.getFullYear() && m === now.getMonth();
+    $('today').hidden = isCurrent;
+    renderDays();
+    renderTotals();
+    if (scrollToToday && isCurrent) {
+      const el = document.querySelector('.day.today');
+      if (el) requestAnimationFrame(() => {
+        const r = el.getBoundingClientRect();
+        if (r.top > window.innerHeight - 140) el.scrollIntoView({ block: 'center' });
+      });
+    }
+  }
+
+  function renderDays() {
+    const { y, m } = view;
+    const n = daysIn(y, m);
+    const hol = holidays(y);
+    const todayK = isoD(new Date());
+    const ms = monthShort(y, m);
+    const weeks = [];
+    let cur = null;
+    for (let d = 1; d <= n; d++) {
+      const dt = new Date(y, m, d);
+      if (!cur || dt.getDay() === 1) { cur = []; weeks.push(cur); }
+      cur.push(dt);
+    }
+    let html = '';
+    weeks.forEach((wk, wi) => {
+      const first = wk[0].getDate(), last = wk[wk.length - 1].getDate();
+      const range = first === last ? `${first} ${ms}` : `${first} – ${last} ${ms}`;
+      html += `<section class="week" data-w="${wi}"><div class="week-h"><span>${range}</span><b class="num" id="w-${wi}"></b></div><div class="list">`;
+      for (const dt of wk) {
+        const d = dt.getDate(), k = isoD(dt), w = dt.getDay();
+        const h = state.hours[k] || 0;
+        const hd = hol[k];
+        const cls = ['day'];
+        if (w === 0 || w === 6) cls.push('weekend');
+        if (hd) cls.push('holiday');
+        if (k === todayK) cls.push('today');
+        const chip = hd ? `<span class="chip" title="${hd.name}">${hd.paid ? 'Feriado no laborable' : 'Feriado'} · ${hd.name}</span>` : '';
+        const amt = h ? `<span class="amt" id="a-${k}">${money(h * rateFor(k))}</span>` : `<span class="amt" id="a-${k}" hidden></span>`;
+        html += `<div class="${cls.join(' ')}" data-k="${k}" data-w="${wi}">
+          <div class="dnum" aria-hidden="true">${d}</div>
+          <div class="dmeta"><span class="dname">${weekdayLong(dt)}${k === todayK ? ' · hoy' : ''}</span><span class="dsub">${chip}${amt}</span></div>
+          <label class="hbox"><span class="sr">Horas del ${weekdayLong(dt)} ${d}</span><input id="h-${k}" class="hin${h ? ' has' : ''}" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="0" value="${h ? fmtH(h) : ''}"><span class="hu">h</span></label>
+        </div>`;
+      }
+      html += `</div></section>`;
+    });
+    $('weeks').innerHTML = html;
+    weeks.forEach((_, wi) => updateWeek(wi));
+  }
+
+  function updateWeek(wi) {
+    let sum = 0;
+    document.querySelectorAll(`.day[data-w="${wi}"]`).forEach(row => { sum += state.hours[row.dataset.k] || 0; });
+    const el = $('w-' + wi);
+    if (el) el.textContent = sum ? `${fmtH(round2(sum))} h` : '';
+  }
+
+  function renderTotals() {
+    const { y, m } = view;
+    const t = compute(y, m);
+    $('sTotal').textContent = money(t.total);
+    $('barTotal').textContent = money(t.total);
+    $('sHours').textContent = `${fmtH(t.hours)} h`;
+    $('sSub').textContent = money(t.sub);
+    $('sIva').textContent = money(t.iva);
+    $('sIvaLbl').textContent = `IVA ${fmtH(state.iva)} %`;
+    const spans = rateSpans(y, m);
+    if (spans.length === 1) {
+      $('sRate').innerHTML = `Valor hora <b class="num">${money(spans[0].rate)}</b>`;
+    } else {
+      $('sRate').innerHTML = spans.map(s => `<b class="num">${money(s.rate)}</b> del ${ddmm(s.from)} al ${ddmm(s.to)}`).join('<br>');
+    }
+    const br = $('sBreak');
+    if (t.groups.length > 1) {
+      br.innerHTML = t.groups.map(g => `<li><span>${fmtH(round2(g.hours))} h × ${money(g.rate)}</span><span class="num">${money(round2(g.amount))}</span></li>`).join('');
+      br.hidden = false;
+    } else { br.hidden = true; br.innerHTML = ''; }
+    $('hint').hidden = t.hours > 0;
+  }
+
+  /* ---------- Carga de horas ---------- */
+  const weeksEl = $('weeks');
+  weeksEl.addEventListener('input', e => {
+    const el = e.target;
+    if (!el.classList.contains('hin')) return;
+    const k = el.id.slice(2);
+    const v = parseHours(el.value);
+    if (Number.isNaN(v)) { el.classList.add('bad'); return; }
+    el.classList.remove('bad');
+    if (v > 0) state.hours[k] = v; else delete state.hours[k];
+    el.classList.toggle('has', v > 0);
+    save();
+    const a = $('a-' + k);
+    if (a) { a.hidden = !(v > 0); a.textContent = v > 0 ? money(v * rateFor(k)) : ''; }
+    updateWeek(el.closest('.day').dataset.w);
+    renderTotals();
+  });
+  weeksEl.addEventListener('focusout', e => {
+    const el = e.target;
+    if (!el.classList.contains('hin')) return;
+    const k = el.id.slice(2);
+    const h = state.hours[k] || 0;
+    if (el.classList.contains('bad')) {
+      el.classList.remove('bad');
+      toast('Valor no válido: usá un número entre 0 y 24');
+    }
+    el.value = h ? fmtH(h) : '';
+  });
+  weeksEl.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !e.target.classList.contains('hin')) return;
+    e.preventDefault();
+    const all = [...weeksEl.querySelectorAll('.hin')];
+    const i = all.indexOf(e.target);
+    if (i >= 0 && i < all.length - 1) { all[i + 1].focus(); all[i + 1].select(); }
+    else e.target.blur();
+  });
+  weeksEl.addEventListener('focusin', e => {
+    if (e.target.classList.contains('hin')) setTimeout(() => e.target.select(), 0);
+  });
+
+  /* ---------- Navegación ---------- */
+  function go(delta) {
+    const d = new Date(view.y, view.m + delta, 1);
+    view.y = d.getFullYear(); view.m = d.getMonth();
+    render(false);
+    window.scrollTo({ top: 0 });
+  }
+  $('prev').addEventListener('click', () => go(-1));
+  $('next').addEventListener('click', () => go(1));
+  $('today').addEventListener('click', () => { view.y = now.getFullYear(); view.m = now.getMonth(); render(true); });
+
+  let sx = 0, sy = 0, st = 0;
+  document.addEventListener('touchstart', e => {
+    if (e.target.closest('input, textarea, dialog')) { st = 0; return; }
+    const t = e.touches[0]; sx = t.clientX; sy = t.clientY; st = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (!st) return;
+    const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Date.now() - st < 600 && Math.abs(dx) > 70 && Math.abs(dy) < 40) go(dx < 0 ? 1 : -1);
+    st = 0;
+  }, { passive: true });
+
+  const appbar = $('appbar');
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([en]) => appbar.classList.toggle('compact', !en.isIntersecting), { rootMargin: '-64px 0px 0px 0px' })
+      .observe($('title'));
+  }
+
+  /* ---------- Ajustes ---------- */
+  const settings = $('settings');
+  function openSheet(d) { if (typeof d.showModal === 'function') d.showModal(); else d.setAttribute('open', ''); }
+  function closeSheet(d) { if (typeof d.close === 'function') d.close(); else d.removeAttribute('open'); }
+  document.querySelectorAll('dialog.sheet').forEach(d => {
+    d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) closeSheet(d); });
+  });
+
+  function fillSettings() {
+    const { y, m } = view;
+    const firstK = iso(y, m, 1);
+    const spans = rateSpans(y, m);
+    $('rateNow').textContent = spans.length === 1
+      ? `Vigente en ${monthName(y, m).toLowerCase()}: ${money(spans[0].rate)}`
+      : `En ${monthName(y, m).toLowerCase()} rigen ${spans.length} valores hora.`;
+    $('rateNew').value = numFmt.format(rateFor(iso(y, m, daysIn(y, m))));
+    $('rateNew').classList.remove('bad');
+    $('rateFrom').value = firstK;
+    $('ivaIn').value = fmtH(state.iva);
+    $('backupTxt').value = JSON.stringify(state);
+    renderHist();
+    disarmClear();
+  }
+  function renderHist() {
+    const rows = state.rates.map((r, i) => {
+      const label = i === 0 ? (r.from === BASE_DATE ? 'Valor inicial' : `Desde el ${ddmmyyyy(r.from)} (y fechas anteriores)`) : `Desde el ${ddmmyyyy(r.from)}`;
+      const del = i === 0 ? '<span class="sp"></span>' : `<button type="button" data-del="${i}" aria-label="Eliminar valor desde ${ddmmyyyy(r.from)}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+      return `<li><span class="d">${label}</span><span class="v">${money(r.value)}</span>${del}</li>`;
+    });
+    $('rateHist').innerHTML = rows.reverse().join('');
+  }
+  $('rateHist').addEventListener('click', e => {
+    const b = e.target.closest('[data-del]');
+    if (!b) return;
+    const i = Number(b.dataset.del);
+    if (i > 0 && i < state.rates.length) {
+      state.rates.splice(i, 1);
+      save(); fillSettings(); render(false);
+      toast('Valor hora eliminado');
+    }
+  });
+  $('rateForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = parseMoney($('rateNew').value);
+    const from = $('rateFrom').value;
+    if (!Number.isFinite(v) || v <= 0) { $('rateNew').classList.add('bad'); toast('Escribí un valor hora válido'); return; }
+    if (!isoRe.test(from)) { toast('Elegí la fecha desde la que rige'); return; }
+    $('rateNew').classList.remove('bad');
+    const same = state.rates.find(r => r.from === from);
+    if (same) same.value = v; else state.rates.push({ from, value: v });
+    sortRates(); save(); fillSettings(); render(false);
+    toast(`Valor hora ${money(v)} desde el ${ddmmyyyy(from)}`);
+  });
+  $('ivaIn').addEventListener('change', e => {
+    const v = parseMoney(e.target.value);
+    if (!Number.isFinite(v) || v > 100) { e.target.classList.add('bad'); toast('El IVA debe ser un porcentaje entre 0 y 100'); return; }
+    e.target.classList.remove('bad');
+    state.iva = v; save(); renderTotals();
+    toast(`IVA actualizado a ${fmtH(v)} %`);
+  });
+  $('openSettings').addEventListener('click', () => { fillSettings(); openSheet(settings); });
+  $('editRate').addEventListener('click', () => {
+    fillSettings(); openSheet(settings);
+    setTimeout(() => { $('rateNew').focus(); $('rateNew').select(); }, 120);
+  });
+
+  $('copyBackup').addEventListener('click', () => copyText(JSON.stringify(state), 'Respaldo copiado', $('backupTxt')));
+  $('restoreBackup').addEventListener('click', () => {
+    let s = null;
+    try { s = clean(JSON.parse($('backupTxt').value)); } catch (e) { s = null; }
+    if (!s) { toast('El texto no es un respaldo válido'); return; }
+    if (!s.seeds.includes(SEED.id)) s.seeds.push(SEED.id);
+    state = s; sortRates(); save(); fillSettings(); render(false);
+    toast('Datos restaurados');
+  });
+
+  let armTimer = 0;
+  function disarmClear() { clearTimeout(armTimer); const b = $('clearMonth'); b.classList.remove('armed'); b.textContent = `Borrar horas de ${monthName(view.y, view.m).toLowerCase()}`; }
+  $('clearMonth').addEventListener('click', () => {
+    const b = $('clearMonth');
+    if (!b.classList.contains('armed')) {
+      b.classList.add('armed'); b.textContent = 'Tocá de nuevo para confirmar';
+      armTimer = setTimeout(disarmClear, 4000);
+      return;
+    }
+    const prefix = `${view.y}-${pad(view.m + 1)}-`;
+    for (const k of Object.keys(state.hours)) if (k.startsWith(prefix)) delete state.hours[k];
+    save(); disarmClear(); fillSettings(); render(false);
+    toast('Horas del mes borradas');
+  });
+
+  /* ---------- Compartir ---------- */
+  function summaryText() {
+    const { y, m } = view;
+    const t = compute(y, m);
+    const spans = rateSpans(y, m);
+    const lines = [`Horas de laboratorio · ${monthName(y, m)} ${y}`, ''];
+    lines.push(`Horas trabajadas: ${fmtH(t.hours)} h`);
+    if (spans.length === 1) lines.push(`Valor hora: ${money(spans[0].rate)}`);
+    else t.groups.forEach(g => lines.push(`${fmtH(round2(g.hours))} h × ${money(g.rate)} = ${money(round2(g.amount))}`));
+    lines.push(`Subtotal: ${money(t.sub)}`);
+    lines.push(`IVA (${fmtH(state.iva)} %): ${money(t.iva)}`);
+    lines.push(`Total a facturar: ${money(t.total)}`);
+    const n = daysIn(y, m), det = [];
+    for (let d = 1; d <= n; d++) {
+      const k = iso(y, m, d), h = state.hours[k];
+      if (h) det.push(`${ddmm(k)} ${weekdayShort(new Date(y, m, d))}: ${fmtH(h)} h`);
+    }
+    if (det.length) lines.push('', 'Detalle:', ...det);
+    return lines.join('\n');
+  }
+  function copyText(text, okMsg, fallbackEl) {
+    const bridge = window.LabHoras;
+    if (bridge && typeof bridge.copy === 'function') {
+      try { if (bridge.copy(text)) { toast(okMsg); return; } } catch (e) { /* sigue */ }
+    }
+    const fail = () => {
+      if (fallbackEl) { fallbackEl.focus(); fallbackEl.select(); toast('Mantené presionado para copiar'); }
+      else { $('shareTxt').value = text; openSheet($('shareSheet')); }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => toast(okMsg), fail);
+    } else fail();
+  }
+  $('share').addEventListener('click', () => {
+    const text = summaryText();
+    const bridge = window.LabHoras;
+    if (bridge && typeof bridge.share === 'function') {
+      try { bridge.share(text); return; } catch (e) { /* sigue */ }
+    }
+    copyText(text, 'Resumen copiado');
+  });
+
+  /* ---------- Varios ---------- */
+  let toastTimer = 0;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg; t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
+  }
+  /* Botón atrás de Android: cierra una hoja abierta antes de salir. */
+  window.__labhorasBack = () => {
+    const open = document.querySelector('dialog.sheet[open]');
+    if (open) { closeSheet(open); return true; }
+    return false;
+  };
+  /* Si la app vuelve tras cambiar de día, refresca "hoy". */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const n = new Date();
+    if (isoD(n) !== isoD(now)) { now.setTime(n.getTime()); render(false); }
+  });
+
+  render(true);
+})();
+</script>
+</body>
+</html>
