@@ -1,0 +1,64 @@
+name: Compilar APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Si se subió LabHoras.zip a mano, lo descomprime en el repositorio y borra el ZIP.
+      - name: Descomprimir LabHoras.zip
+        run: |
+          if [ -f LabHoras.zip ]; then
+            unzip -o LabHoras.zip
+            git rm -q --cached LabHoras.zip
+            rm LabHoras.zip
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "Descomprimir LabHoras.zip"
+            git push
+          fi
+
+      - uses: actions/setup-java@v4
+        if: hashFiles('android/settings.gradle.kts') != ''
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: hashFiles('android/settings.gradle.kts') != ''
+
+      - name: Compilar APK firmado
+        if: hashFiles('android/settings.gradle.kts') != ''
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk "../HorasLab-1.0.${{ github.run_number }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('android/settings.gradle.kts') != ''
+        with:
+          name: HorasLab-1.0.${{ github.run_number }}
+          path: HorasLab-*.apk
+
+      - name: Publicar versión descargable
+        if: hashFiles('android/settings.gradle.kts') != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Horas Lab 1.0.${{ github.run_number }}
+          make_latest: true
+          files: HorasLab-*.apk
+          body: |
+            APK para Android 16 / One UI 8.1.
+            Descargá el .apk desde el teléfono e instalalo. Las versiones nuevas se instalan encima y conservan los datos.
