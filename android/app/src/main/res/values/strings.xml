@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Horas Lab</string>
+    <string name="app_name">LabHoras</string>
     <string name="share_title">Compartir resumen</string>
+    <string name="punch_out">Marcar salida</string>
+    <string name="notif_in_lab">En el laboratorio</string>
+    <string name="notif_since">Entrada a las %1$s</string>
+    <string name="reminder_title">¿Seguís en el laboratorio?</string>
+    <string name="reminder_text">Marcaste la entrada a las %1$s y todavía no marcaste la salida. Si ya saliste, marcala o corregí la hora en la app.</string>
+    <string name="tile_label">Marcar</string>
+    <string name="tile_in">Dentro desde %1$s</string>
+    <string name="tile_out">Fuera</string>
+    <string name="shortcut_short">Marcar</string>
+    <string name="shortcut_long">Marcar entrada o salida</string>
 </resources>

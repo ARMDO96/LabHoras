@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Horas Lab</title>
+<title>LabHoras</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#EEF6F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#091315" media="(prefers-color-scheme: dark)">
@@ -274,6 +274,49 @@ button { cursor: pointer; }
 .s-break li { display: flex; justify-content: space-between; gap: 8px; }
 .hint { margin: 14px 4px 0; font-size: .86rem; color: var(--muted); }
 
+/* Reloj de marcar */
+.clock {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 16px 16px 16px 20px;
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.clock .c-txt { min-width: 0; display: grid; gap: 2px; }
+.clock .c-lbl { font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-strong); }
+.clock .c-main { font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.clock .c-sub { font-size: .84rem; color: var(--muted); }
+.clock .c-sub button { padding: 0; border: 0; background: none; color: var(--accent-strong); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.clock.on { background: var(--accent-soft); }
+.clock.warn { background: var(--holiday-soft); }
+.clock.warn .c-lbl { color: var(--holiday); }
+.punch {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  width: 92px;
+  height: 92px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: .78rem;
+  font-weight: 600;
+  line-height: 1.1;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+  transition: transform .12s;
+}
+.punch:active { transform: scale(.96); }
+.punch svg { width: 34px; height: 34px; }
+.clock.on .punch { background: var(--accent-strong); color: var(--surface); }
+.clock.warn .punch { background: var(--holiday); color: var(--surface); }
+.punch[hidden] { display: none; }
+.times { padding: 0; border: 0; background: none; color: var(--accent-strong); font-size: inherit; font-variant-numeric: tabular-nums; text-decoration: underline dotted; text-underline-offset: 3px; }
+
 /* Lista de días */
 .weeks { display: grid; gap: 18px; margin-top: 22px; }
 .week-h {
@@ -521,6 +564,18 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     <h1 class="big" id="title">Mes</h1>
   </header>
 
+  <section class="clock" id="clock" aria-label="Reloj de marcar">
+    <div class="c-txt">
+      <span class="c-lbl" id="cLbl">Hoy</span>
+      <span class="c-main" id="cMain">Sin marcar</span>
+      <span class="c-sub" id="cSub"></span>
+    </div>
+    <button class="punch" type="button" id="punch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4.6A8.5 8.5 0 0 1 20.2 11"/><path d="M3.8 9a8.5 8.5 0 0 1 1.6-2.6"/><path d="M6 19.3A8.5 8.5 0 0 1 3.5 13"/><path d="M12 7.5a4.5 4.5 0 0 1 4.5 4.5c0 2.2-.4 4.3-1.2 6.2"/><path d="M7.5 12a4.5 4.5 0 0 1 1.3-3.2"/><path d="M8.8 20.3A12 12 0 0 0 10.5 13"/><path d="M12 11.2v.8c0 3.1-.7 6-2 8.6"/><path d="M13.8 20.8c.5-1 .9-2.1 1.2-3.2"/><path d="M19.8 15.5a14 14 0 0 1-.9 3"/></svg>
+      <span id="punchLbl">Entrada</span>
+    </button>
+  </section>
+
   <section class="summary" aria-label="Resumen del mes">
     <p class="s-label">Total a facturar con IVA</p>
     <p class="s-total num" id="sTotal">$ 0,00</p>
@@ -624,6 +679,30 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
   </div>
 </dialog>
 
+<dialog class="sheet" id="fixSheet" aria-labelledby="fixTitle">
+  <form class="sheet-in" id="fixForm" novalidate>
+    <div class="grab"></div>
+    <div class="sheet-h">
+      <h2 id="fixTitle">Corregir marcas</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <p id="fixNote" style="margin:0;color:var(--muted);font-size:.88rem"></p>
+    <div class="card">
+      <div class="row2">
+        <label class="field"><span>Entrada</span><input id="fixIn" type="time" required></label>
+        <label class="field"><span>Salida</span><input id="fixOut" type="time"></label>
+      </div>
+      <p id="fixCalc" style="margin:0;font-size:.95rem;font-weight:600"></p>
+    </div>
+    <div class="btns">
+      <button class="btn" type="submit">Guardar</button>
+      <button class="btn warn" type="button" id="fixDelete">Borrar marcas</button>
+    </div>
+  </form>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -643,7 +722,7 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
   const isoRe = /^\d{4}-\d{2}-\d{2}$/;
 
   function fresh() {
-    return { v: 1, hours: {}, rates: [{ from: BASE_DATE, value: DEFAULT_RATE }], iva: DEFAULT_IVA, seeds: [] };
+    return { v: 1, hours: {}, rates: [{ from: BASE_DATE, value: DEFAULT_RATE }], iva: DEFAULT_IVA, seeds: [], punch: { open: null, log: {} } };
   }
   function clean(s) {
     if (!s || typeof s !== 'object') return null;
@@ -658,7 +737,19 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     }
     const iva = Number.isFinite(s.iva) && s.iva >= 0 && s.iva <= 100 ? s.iva : DEFAULT_IVA;
     const seeds = Array.isArray(s.seeds) ? s.seeds.filter(x => typeof x === 'string') : [];
-    return { v: 1, hours, rates, iva, seeds };
+    /* Marcas del reloj: una entrada y una salida por día (milisegundos). */
+    const punch = { open: null, log: {} };
+    const ms = x => Number.isFinite(x) && x > 0;
+    if (s.punch && typeof s.punch === 'object') {
+      if (s.punch.open && ms(s.punch.open.start)) punch.open = { start: s.punch.open.start };
+      if (s.punch.log && typeof s.punch.log === 'object') {
+        for (const [k, e] of Object.entries(s.punch.log)) {
+          if (!isoRe.test(k) || !e || !ms(e.in)) continue;
+          punch.log[k] = ms(e.out) && e.out > e.in ? { in: e.in, out: e.out } : { in: e.in };
+        }
+      }
+    }
+    return { v: 1, hours, rates, iva, seeds, punch };
   }
 
   /* Carga inicial desde la planilla "Horas trabajadas" (abril a octubre de 2026).
@@ -704,6 +795,19 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
   const money = x => moneyFmt.format(x);
   const numFmt = new Intl.NumberFormat('es-UY', { maximumFractionDigits: 2 });
   const fmtH = h => numFmt.format(h);
+  /* 3,2833 h -> "3 h 17 min" */
+  function fmtHM(h) {
+    const t = Math.round(h * 60), H = Math.floor(t / 60), M = t % 60;
+    if (!M) return `${H} h`;
+    return H ? `${H} h ${M} min` : `${M} min`;
+  }
+  /* Valor del casillero: medias horas en decimal (3,5) y el resto como h:mm (3:17). */
+  function fmtInput(h) {
+    if (!h) return '';
+    const t = Math.round(h * 60);
+    return t % 30 === 0 ? fmtH(t / 60) : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  }
+  const hhmm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const monthName = (y, m) => cap(new Date(y, m, 1).toLocaleDateString('es-UY', { month: 'long' }));
   const monthShort = (y, m) => new Date(y, m, 1).toLocaleDateString('es-UY', { month: 'short' }).replace('.', '').toLowerCase();
   const weekdayLong = dt => dt.toLocaleDateString('es-UY', { weekday: 'long' });
@@ -865,10 +969,11 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
         if (k === todayK) cls.push('today');
         const chip = hd ? `<span class="chip" title="${hd.name}">${hd.paid ? 'Feriado no laborable' : 'Feriado'} · ${hd.name}</span>` : '';
         const amt = h ? `<span class="amt" id="a-${k}">${money(h * rateFor(k))}</span>` : `<span class="amt" id="a-${k}" hidden></span>`;
+        const times = timesLabel(k);
         html += `<div class="${cls.join(' ')}" data-k="${k}" data-w="${wi}">
           <div class="dnum" aria-hidden="true">${d}</div>
-          <div class="dmeta"><span class="dname">${weekdayLong(dt)}${k === todayK ? ' · hoy' : ''}</span><span class="dsub">${chip}${amt}</span></div>
-          <label class="hbox"><span class="sr">Horas del ${weekdayLong(dt)} ${d}</span><input id="h-${k}" class="hin${h ? ' has' : ''}" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="0" value="${h ? fmtH(h) : ''}"><span class="hu">h</span></label>
+          <div class="dmeta"><span class="dname">${weekdayLong(dt)}${k === todayK ? ' · hoy' : ''}</span><span class="dsub">${chip}${times}${amt}</span></div>
+          <label class="hbox"><span class="sr">Horas del ${weekdayLong(dt)} ${d}</span><input id="h-${k}" class="hin${h ? ' has' : ''}" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" placeholder="0" value="${fmtInput(h)}"><span class="hu">h</span></label>
         </div>`;
       }
       html += `</div></section>`;
@@ -881,7 +986,7 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     let sum = 0;
     document.querySelectorAll(`.day[data-w="${wi}"]`).forEach(row => { sum += state.hours[row.dataset.k] || 0; });
     const el = $('w-' + wi);
-    if (el) el.textContent = sum ? `${fmtH(round2(sum))} h` : '';
+    if (el) el.textContent = sum ? fmtHM(sum) : '';
   }
 
   function renderTotals() {
@@ -889,7 +994,7 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     const t = compute(y, m);
     $('sTotal').textContent = money(t.total);
     $('barTotal').textContent = money(t.total);
-    $('sHours').textContent = `${fmtH(t.hours)} h`;
+    $('sHours').textContent = fmtHM(t.hours);
     $('sSub').textContent = money(t.sub);
     $('sIva').textContent = money(t.iva);
     $('sIvaLbl').textContent = `IVA ${fmtH(state.iva)} %`;
@@ -901,7 +1006,7 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     }
     const br = $('sBreak');
     if (t.groups.length > 1) {
-      br.innerHTML = t.groups.map(g => `<li><span>${fmtH(round2(g.hours))} h × ${money(g.rate)}</span><span class="num">${money(round2(g.amount))}</span></li>`).join('');
+      br.innerHTML = t.groups.map(g => `<li><span>${fmtHM(g.hours)} × ${money(g.rate)}</span><span class="num">${money(round2(g.amount))}</span></li>`).join('');
       br.hidden = false;
     } else { br.hidden = true; br.innerHTML = ''; }
     $('hint').hidden = t.hours > 0;
@@ -933,7 +1038,7 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
       el.classList.remove('bad');
       toast('Valor no válido: usá un número entre 0 y 24');
     }
-    el.value = h ? fmtH(h) : '';
+    el.value = fmtInput(h);
   });
   weeksEl.addEventListener('keydown', e => {
     if (e.key !== 'Enter' || !e.target.classList.contains('hin')) return;
@@ -1048,7 +1153,7 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     try { s = clean(JSON.parse($('backupTxt').value)); } catch (e) { s = null; }
     if (!s) { toast('El texto no es un respaldo válido'); return; }
     if (!s.seeds.includes(SEED.id)) s.seeds.push(SEED.id);
-    state = s; sortRates(); save(); fillSettings(); render(false);
+    state = s; sortRates(); save(); syncNative(); renderClock(); fillSettings(); render(false);
     toast('Datos restaurados');
   });
 
@@ -1063,7 +1168,9 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     }
     const prefix = `${view.y}-${pad(view.m + 1)}-`;
     for (const k of Object.keys(state.hours)) if (k.startsWith(prefix)) delete state.hours[k];
-    save(); disarmClear(); fillSettings(); render(false);
+    for (const k of Object.keys(state.punch.log)) if (k.startsWith(prefix)) delete state.punch.log[k];
+    if (state.punch.open && dayOf(state.punch.open.start).startsWith(prefix)) state.punch.open = null;
+    save(); syncNative(); renderClock(); disarmClear(); fillSettings(); render(false);
     toast('Horas del mes borradas');
   });
 
@@ -1073,16 +1180,17 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     const t = compute(y, m);
     const spans = rateSpans(y, m);
     const lines = [`Horas de laboratorio · ${monthName(y, m)} ${y}`, ''];
-    lines.push(`Horas trabajadas: ${fmtH(t.hours)} h`);
+    lines.push(`Horas trabajadas: ${fmtHM(t.hours)}`);
     if (spans.length === 1) lines.push(`Valor hora: ${money(spans[0].rate)}`);
-    else t.groups.forEach(g => lines.push(`${fmtH(round2(g.hours))} h × ${money(g.rate)} = ${money(round2(g.amount))}`));
+    else t.groups.forEach(g => lines.push(`${fmtHM(g.hours)} × ${money(g.rate)} = ${money(round2(g.amount))}`));
     lines.push(`Subtotal: ${money(t.sub)}`);
     lines.push(`IVA (${fmtH(state.iva)} %): ${money(t.iva)}`);
     lines.push(`Total a facturar: ${money(t.total)}`);
     const n = daysIn(y, m), det = [];
     for (let d = 1; d <= n; d++) {
       const k = iso(y, m, d), h = state.hours[k];
-      if (h) det.push(`${ddmm(k)} ${weekdayShort(new Date(y, m, d))}: ${fmtH(h)} h`);
+      const e = state.punch.log[k];
+      if (h) det.push(`${ddmm(k)} ${weekdayShort(new Date(y, m, d))}: ${fmtHM(h)}${e && e.out ? ` (${hhmm(e.in)}–${hhmm(e.out)})` : ''}`);
     }
     if (det.length) lines.push('', 'Detalle:', ...det);
     return lines.join('\n');
@@ -1109,6 +1217,208 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     copyText(text, 'Resumen copiado');
   });
 
+  /* ---------- Reloj de marcar ----------
+     Entrada y salida con huella (solo en la app instalada). Las horas del día son el tiempo exacto al minuto.
+     Si pasan más de MAX_AUTO_H horas sin marcar la salida, se pide la hora de salida a mano. */
+  const MAX_AUTO_H = 16;
+  const bridge = () => window.LabHoras;
+  const dayOf = t => isoD(new Date(t));
+  const minutesOf = (a, b) => Math.round((b - a) / 60000);
+  const dateOfKey = k => new Date(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10));
+
+  function timesLabel(k) {
+    const e = state.punch.log[k];
+    if (!e) return '';
+    let txt;
+    if (e.out) {
+      txt = `${hhmm(e.in)}–${hhmm(e.out)}`;
+      const h = state.hours[k] || 0;
+      if (Math.round(h * 60) !== minutesOf(e.in, e.out)) txt += ' · ajustado';
+    } else txt = `Entrada ${hhmm(e.in)} · en curso`;
+    return `<button class="times" type="button" data-fix="${k}" aria-label="Corregir marcas del ${ddmm(k)}">${txt}</button>`;
+  }
+
+  const authWaits = {};
+  let authSeq = 0;
+  window.__labhorasAuthResult = (id, ok, msg) => {
+    const f = authWaits[id];
+    delete authWaits[id];
+    if (f) f({ ok: !!ok, msg: msg || '' });
+  };
+  function verify(title, subtitle) {
+    const b = bridge();
+    if (!b || typeof b.authenticate !== 'function') return Promise.resolve({ ok: true, preview: true });
+    return new Promise(res => {
+      const id = 'a' + (++authSeq);
+      authWaits[id] = res;
+      try { b.authenticate(title, subtitle, id); }
+      catch (e) { delete authWaits[id]; res({ ok: false, msg: 'No se pudo abrir el lector de huella' }); }
+    });
+  }
+  function syncNative() {
+    const b = bridge();
+    if (b && typeof b.setClockState === 'function') {
+      try { b.setClockState(state.punch.open ? String(state.punch.open.start) : '0'); } catch (e) { /* sin aviso nativo */ }
+    }
+  }
+  function askNotify() {
+    const b = bridge();
+    if (b && typeof b.requestNotifications === 'function') { try { b.requestNotifications(); } catch (e) { /* opcional */ } }
+  }
+  function applyPunchHours(k) {
+    const e = state.punch.log[k];
+    if (!e || !e.out) return;
+    const h = Math.min(24, Math.round(minutesOf(e.in, e.out) / 60 * 1e6) / 1e6);
+    if (h > 0) state.hours[k] = h; else delete state.hours[k];
+  }
+  function afterPunchChange() { save(); syncNative(); renderClock(); render(false); }
+
+  let busy = false;
+  async function punch() {
+    if (busy) return;
+    busy = true;
+    try {
+      const open = state.punch.open;
+      if (!open) {
+        const e = state.punch.log[dayOf(Date.now())];
+        if (e && e.out) { toast('Hoy ya marcaste entrada y salida. Tocá Corregir para cambiarlas.'); return; }
+        const r = await verify('Marcar entrada', 'Confirmá con tu huella');
+        if (!r.ok) { if (r.msg) toast(r.msg); return; }
+        const t = Date.now();
+        state.punch.open = { start: t };
+        state.punch.log[dayOf(t)] = { in: t };
+        afterPunchChange();
+        askNotify();
+        toast(`Entrada marcada a las ${hhmm(t)}`);
+      } else {
+        if ((Date.now() - open.start) / 3600000 > MAX_AUTO_H) { openFix(dayOf(open.start)); return; }
+        const r = await verify('Marcar salida', 'Confirmá con tu huella');
+        if (!r.ok) { if (r.msg) toast(r.msg); return; }
+        const t = Date.now(), k = dayOf(open.start);
+        state.punch.log[k] = { in: open.start, out: t };
+        state.punch.open = null;
+        applyPunchHours(k);
+        afterPunchChange();
+        toast(`Salida marcada · ${fmtHM(minutesOf(open.start, t) / 60)} trabajadas`);
+      }
+    } finally { busy = false; }
+  }
+
+  function renderClock() {
+    const open = state.punch.open, t = Date.now(), todayK = dayOf(t), e = state.punch.log[todayK];
+    const card = $('clock');
+    card.classList.remove('on', 'warn');
+    let lbl = 'Hoy', main = 'Sin marcar', sub = '', btn = true, btnLbl = 'Entrada', aria = 'Marcar entrada con huella';
+    if (open) {
+      const mins = Math.max(0, Math.floor((t - open.start) / 60000));
+      if (mins / 60 > MAX_AUTO_H) {
+        card.classList.add('warn');
+        lbl = 'Falta marcar la salida';
+        main = `Entrada ${weekdayShort(new Date(open.start))} ${ddmm(dayOf(open.start))} · ${hhmm(open.start)}`;
+        sub = 'Indicá a qué hora saliste.';
+        btnLbl = 'Corregir'; aria = 'Indicar la hora de salida';
+      } else {
+        card.classList.add('on');
+        lbl = 'En el laboratorio';
+        main = mins ? fmtHM(mins / 60) : '0 min';
+        sub = `Desde las ${hhmm(open.start)}${dayOf(open.start) !== todayK ? ' de ayer' : ''} · <button type="button" data-fix="${dayOf(open.start)}">Corregir</button>`;
+        btnLbl = 'Salida'; aria = 'Marcar salida con huella';
+      }
+    } else if (e && e.out) {
+      lbl = 'Hoy trabajaste';
+      main = fmtHM(minutesOf(e.in, e.out) / 60);
+      sub = `${hhmm(e.in)} – ${hhmm(e.out)} · <button type="button" data-fix="${todayK}">Corregir</button>`;
+      btn = false;
+    } else {
+      sub = bridge() ? 'Tocá el botón y apoyá el dedo en el lector.' : 'Vista previa: la huella solo funciona en la app instalada.';
+    }
+    $('cLbl').textContent = lbl;
+    $('cMain').textContent = main;
+    $('cSub').innerHTML = sub;
+    $('punch').hidden = !btn;
+    $('punchLbl').textContent = btnLbl;
+    $('punch').setAttribute('aria-label', aria);
+  }
+
+  /* Corregir marcas de un día */
+  let fixDay = null;
+  function fixTimes() {
+    const d = dateOfKey(fixDay);
+    const parse = v => (/^\d{2}:\d{2}/.test(v) ? v.split(':').map(Number) : null);
+    const a = parse($('fixIn').value), b = parse($('fixOut').value);
+    const inT = a ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), a[0], a[1]).getTime() : null;
+    let outT = b ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), b[0], b[1]).getTime() : null;
+    if (inT && outT && outT <= inT) outT = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, b[0], b[1]).getTime();
+    return { inT, outT };
+  }
+  function updateFixCalc() {
+    const { inT, outT } = fixTimes();
+    $('fixCalc').textContent = inT && outT ? `Total: ${fmtHM(minutesOf(inT, outT) / 60)}` : '';
+  }
+  function disarmFixDelete() { const b = $('fixDelete'); b.classList.remove('armed'); b.textContent = 'Borrar marcas'; }
+  function openFix(k) {
+    fixDay = k;
+    const e = state.punch.log[k] || {};
+    const isOpen = !!state.punch.open && dayOf(state.punch.open.start) === k;
+    const inT = e.in || (isOpen ? state.punch.open.start : null);
+    $('fixTitle').textContent = `Marcas del ${weekdayLong(dateOfKey(k))} ${ddmm(k)}`;
+    $('fixIn').value = inT ? hhmm(inT) : '';
+    $('fixOut').value = e.out ? hhmm(e.out) : '';
+    $('fixNote').textContent = isOpen && !e.out
+      ? 'No marcaste la salida. Escribí a qué hora saliste.'
+      : 'Si la salida es más temprano que la entrada, se cuenta como pasada la medianoche.';
+    $('fixDelete').hidden = !state.punch.log[k];
+    disarmFixDelete();
+    updateFixCalc();
+    openSheet($('fixSheet'));
+  }
+  $('fixIn').addEventListener('input', updateFixCalc);
+  $('fixOut').addEventListener('input', updateFixCalc);
+  $('fixForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const k = fixDay, { inT, outT } = fixTimes();
+    const isOpen = !!state.punch.open && dayOf(state.punch.open.start) === k;
+    if (!inT) { toast('Escribí la hora de entrada'); return; }
+    if (inT > Date.now()) { toast('La entrada no puede ser en el futuro'); return; }
+    if (outT) {
+      if (outT > Date.now()) { toast('La salida no puede ser en el futuro'); return; }
+      state.punch.log[k] = { in: inT, out: outT };
+      if (isOpen) state.punch.open = null;
+      applyPunchHours(k);
+    } else if (isOpen || (k === dayOf(Date.now()) && !state.punch.open)) {
+      state.punch.open = { start: inT };
+      state.punch.log[k] = { in: inT };
+    } else { toast('Escribí la hora de salida'); return; }
+    closeSheet($('fixSheet'));
+    afterPunchChange();
+    toast('Marcas guardadas');
+  });
+  $('fixDelete').addEventListener('click', () => {
+    const b = $('fixDelete');
+    if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Tocá de nuevo para borrar'; return; }
+    const k = fixDay, e = state.punch.log[k];
+    if (e && e.out && Math.round((state.hours[k] || 0) * 60) === minutesOf(e.in, e.out)) delete state.hours[k];
+    delete state.punch.log[k];
+    if (state.punch.open && dayOf(state.punch.open.start) === k) state.punch.open = null;
+    closeSheet($('fixSheet'));
+    afterPunchChange();
+    toast('Marcas borradas');
+  });
+
+  $('punch').addEventListener('click', punch);
+  document.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-fix]');
+    if (b) openFix(b.dataset.fix);
+  });
+  /* Atajo, botón rápido o notificación de Android: abre la app y pide la huella. */
+  window.__labhorasPunch = () => {
+    document.querySelectorAll('dialog.sheet[open]').forEach(closeSheet);
+    window.scrollTo({ top: 0 });
+    punch();
+  };
+  setInterval(() => { if (state.punch.open) renderClock(); }, 20000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') renderClock(); });
+
   /* ---------- Varios ---------- */
   let toastTimer = 0;
   function toast(msg) {
@@ -1130,6 +1440,8 @@ dialog.sheet[open] { animation: up .28s cubic-bezier(.2, .8, .2, 1); }
     if (isoD(n) !== isoD(now)) { now.setTime(n.getTime()); render(false); }
   });
 
+  renderClock();
+  syncNative();
   render(true);
 })();
 </script>

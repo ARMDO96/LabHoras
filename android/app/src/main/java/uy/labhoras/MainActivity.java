@@ -5,11 +5,15 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Insets;
+import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricPrompt;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CancellationSignal;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
@@ -24,6 +28,8 @@ import android.widget.FrameLayout;
 import android.window.OnBackInvokedDispatcher;
 
 import androidx.webkit.WebViewAssetLoader;
+
+import org.json.JSONObject;
 
 import java.util.Locale;
 
@@ -40,6 +46,8 @@ public class MainActivity extends Activity {
     private FrameLayout root;
     private float insetTopDp = 0f;
     private float insetBottomDp = 0f;
+    private boolean pageReady = false;
+    private boolean pendingPunch = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +75,69 @@ public class MainActivity extends Activity {
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState);
         } else {
+            pendingPunch = isPunch(getIntent());
             web.loadUrl(START_URL);
+        }
+    }
+
+    /* ---------- Reloj de marcar: atajo, botón rápido y notificación ---------- */
+
+    private static boolean isPunch(Intent i) {
+        return i != null && Clock.ACTION_PUNCH.equals(i.getAction());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (!isPunch(intent)) return;
+        if (pageReady) triggerPunch();
+        else pendingPunch = true;
+    }
+
+    private void triggerPunch() {
+        if (web != null) web.evaluateJavascript("window.__labhorasPunch && window.__labhorasPunch()", null);
+    }
+
+    private void sendAuthResult(String id, boolean ok, String msg) {
+        if (web == null) return;
+        web.evaluateJavascript("window.__labhorasAuthResult && window.__labhorasAuthResult("
+                + JSONObject.quote(id) + "," + ok + "," + JSONObject.quote(msg) + ")", null);
+    }
+
+    /** Huella (o PIN/patrón del teléfono como alternativa) con el diálogo del sistema. */
+    private void authenticate(String title, String subtitle, String id) {
+        int allowed = BiometricManager.Authenticators.BIOMETRIC_STRONG
+                | BiometricManager.Authenticators.DEVICE_CREDENTIAL;
+        BiometricManager bm = getSystemService(BiometricManager.class);
+        if (bm == null || bm.canAuthenticate(allowed) != BiometricManager.BIOMETRIC_SUCCESS) {
+            sendAuthResult(id, false, "Configurá una huella o un bloqueo de pantalla en el teléfono para poder marcar.");
+            return;
+        }
+        BiometricPrompt prompt = new BiometricPrompt.Builder(this)
+                .setTitle(title)
+                .setSubtitle(subtitle)
+                .setAllowedAuthenticators(allowed)
+                .build();
+        prompt.authenticate(new CancellationSignal(), getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
+            @Override
+            public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                sendAuthResult(id, true, "");
+            }
+
+            @Override
+            public void onAuthenticationError(int code, CharSequence err) {
+                boolean cancelled = code == BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED
+                        || code == BiometricPrompt.BIOMETRIC_ERROR_CANCELED;
+                sendAuthResult(id, false, cancelled ? "Marcación cancelada" : String.valueOf(err));
+            }
+        });
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
         }
     }
 
@@ -112,7 +182,6 @@ public class MainActivity extends Activity {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
-        s.setDatabaseEnabled(true);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setTextZoom(100);
@@ -142,7 +211,12 @@ public class MainActivity extends Activity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                pageReady = true;
                 pushInsets();
+                if (pendingPunch) {
+                    pendingPunch = false;
+                    triggerPunch();
+                }
             }
         });
 
@@ -211,6 +285,29 @@ public class MainActivity extends Activity {
                 send.putExtra(Intent.EXTRA_TEXT, text);
                 startActivity(Intent.createChooser(send, getString(R.string.share_title)));
             });
+        }
+
+        @JavascriptInterface
+        public void authenticate(String title, String subtitle, String id) {
+            runOnUiThread(() -> MainActivity.this.authenticate(title, subtitle, id));
+        }
+
+        /** startMillis: hora de entrada en milisegundos, o "0" si no hay entrada abierta. */
+        @JavascriptInterface
+        public void setClockState(String startMillis) {
+            long start;
+            try {
+                start = Long.parseLong(startMillis);
+            } catch (NumberFormatException e) {
+                start = 0L;
+            }
+            final long s = start;
+            runOnUiThread(() -> Clock.setState(getApplicationContext(), s));
+        }
+
+        @JavascriptInterface
+        public void requestNotifications() {
+            runOnUiThread(MainActivity.this::requestNotificationPermission);
         }
 
         @JavascriptInterface

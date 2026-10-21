@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_punch"
+        android:shortcutId="marcar"
+        android:shortcutLongLabel="@string/shortcut_long"
+        android:shortcutShortLabel="@string/shortcut_short">
+        <intent
+            android:action="uy.labhoras.MARCAR"
+            android:targetClass="uy.labhoras.MainActivity"
+            android:targetPackage="uy.labhoras" />
+    </shortcut>
+</shortcuts>
