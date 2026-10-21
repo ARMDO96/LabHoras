@@ -107,6 +107,15 @@ public class MainActivity extends Activity {
 
     /** Huella (o PIN/patrón del teléfono como alternativa) con el diálogo del sistema. */
     private void authenticate(String title, String subtitle, String id) {
+        try {
+            showPrompt(title, subtitle, id);
+        } catch (Throwable t) {
+            // Nunca cerrar la app por un problema con el lector: se informa en pantalla.
+            sendAuthResult(id, false, "No se pudo usar el lector de huella (" + t.getClass().getSimpleName() + ").");
+        }
+    }
+
+    private void showPrompt(String title, String subtitle, String id) {
         int allowed = BiometricManager.Authenticators.BIOMETRIC_STRONG
                 | BiometricManager.Authenticators.DEVICE_CREDENTIAL;
         BiometricManager bm = getSystemService(BiometricManager.class);
@@ -302,12 +311,24 @@ public class MainActivity extends Activity {
                 start = 0L;
             }
             final long s = start;
-            runOnUiThread(() -> Clock.setState(getApplicationContext(), s));
+            runOnUiThread(() -> {
+                try {
+                    Clock.setState(getApplicationContext(), s);
+                } catch (Throwable ignored) {
+                    // La notificación es opcional; la marca ya quedó guardada en la página.
+                }
+            });
         }
 
         @JavascriptInterface
         public void requestNotifications() {
-            runOnUiThread(MainActivity.this::requestNotificationPermission);
+            runOnUiThread(() -> {
+                try {
+                    requestNotificationPermission();
+                } catch (Throwable ignored) {
+                    // Sin permiso solo se pierde el aviso.
+                }
+            });
         }
 
         @JavascriptInterface
